@@ -1,9 +1,12 @@
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { candidateSchema, CandidateFormData } from '../schemas/candidateSchema';
 import { ExperienceLevels } from '../enum/experienceLevels';
 
 export const CandidateForm = () => {
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -14,13 +17,11 @@ export const CandidateForm = () => {
 
   const onSubmit = async (data: CandidateFormData) => {
     try {
-      // Como temos um ficheiro, precisamos construir um FormData
       const formData = new FormData();
       formData.append('fullName', data.fullName);
       formData.append('email', data.email);
       formData.append('position', data.position);
       formData.append('englishLevel', data.englishLevel);
-      // O react-hook-form coloca os ficheiros num array
       if (data.resume && data.resume.length > 0) {
         formData.append('resume', data.resume[0]);
       }
@@ -32,8 +33,7 @@ export const CandidateForm = () => {
       });
 
       if (response.ok) {
-        alert('Candidatura enviada com sucesso! A Head de RH agradece.');
-        // Aqui no futuro podemos limpar o formulário ou redirecionar
+        setIsSubmitted(true);
       } else {
         alert('Erro ao enviar candidatura. Tente novamente.');
       }
@@ -45,6 +45,24 @@ export const CandidateForm = () => {
 
   // Converte o Enum para um Array para podermos usar o .map()
   const experienceOptions = Object.values(ExperienceLevels);
+
+  if (isSubmitted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-8 border border-gray-100 text-center space-y-4">
+          <div className="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800">Candidatura Recebida!</h2>
+          <p className="text-gray-500">
+            Agradecemos o seu interesse. A Head de RH irá analisar o seu perfil e entrará em contacto em breve.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">

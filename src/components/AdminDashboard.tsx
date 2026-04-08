@@ -24,6 +24,7 @@ const STATUS_OPTIONS = ['Pendente', 'Em Análise', 'Aprovado', 'Rejeitado'];
 export const AdminDashboard = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [englishFilter, setEnglishFilter] = useState('Todos');
 
   useEffect(() => {
     fetch('/api/admin/candidates')
@@ -70,6 +71,18 @@ export const AdminDashboard = () => {
     })).filter(item => item.value > 0);
   }, [candidates]);
 
+  // Filtra os candidatos de forma reativa localmente com base na seleção
+  const filteredCandidates = useMemo(() => {
+    if (englishFilter === 'Todos') return candidates;
+    return candidates.filter(c => c.experience_level === englishFilter);
+  }, [candidates, englishFilter]);
+
+  // Níveis de inglês únicos na tabela dinamicamente
+  const availableEnglishLevels = useMemo(() => {
+    const levels = candidates.map(c => c.experience_level).filter(Boolean);
+    return Array.from(new Set(levels)).sort();
+  }, [candidates]);
+
   if (loading) return <div className="min-h-screen flex items-center justify-center p-8 text-slate-500">Carregando Dashboard...</div>;
 
   return (
@@ -106,28 +119,47 @@ export const AdminDashboard = () => {
 
           {/* Tabela */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden col-span-1 lg:col-span-2 flex flex-col">
-            <div className="p-6 border-b border-slate-100">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-800">Candidatos Recentes</h2>
+              
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-slate-600 font-medium">Filtrar Inglês:</label>
+                <select 
+                  value={englishFilter} 
+                  onChange={(e) => setEnglishFilter(e.target.value)}
+                  className="bg-white border border-slate-300 text-slate-700 text-sm font-medium rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+                >
+                  <option value="Todos">Todos</option>
+                  {availableEnglishLevels.map(level => (
+                     <option key={level} value={level}>{level}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="overflow-x-auto flex-1">
               <table className="w-full text-left text-sm">
                 <thead className="bg-slate-50/50 text-slate-500 font-medium">
                   <tr>
-                    <th className="px-6 py-4">Candidato</th>
-                    <th className="px-6 py-4">Vaga & Nível</th>
+                    <th className="px-6 py-4 relative group">
+                      Candidato
+                    </th>
+                    <th className="px-6 py-4">Vaga</th>
+                    <th className="px-6 py-4">Nível de Inglês</th>
                     <th className="px-6 py-4">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {candidates.map(c => (
+                  {filteredCandidates.map(c => (
                     <tr key={c.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4">
                         <p className="font-semibold text-slate-900">{c.name}</p>
                         <p className="text-xs text-slate-500 mt-1">{c.email}</p>
                       </td>
-                      <td className="px-6 py-4">
-                        <p className="text-slate-800 font-medium">{c.position}</p>
-                        <p className="text-xs text-slate-500 mt-1">{c.experience_level}</p>
+                      <td className="px-6 py-4 text-slate-800 font-medium">
+                        {c.position}
+                      </td>
+                      <td className="px-6 py-4 text-slate-600">
+                        {c.experience_level}
                       </td>
                       <td className="px-6 py-4">
                         <select 
@@ -142,9 +174,9 @@ export const AdminDashboard = () => {
                       </td>
                     </tr>
                   ))}
-                  {candidates.length === 0 && (
+                  {filteredCandidates.length === 0 && (
                     <tr>
-                      <td colSpan={3} className="px-6 py-10 text-center text-slate-500">Nenhum candidato encontrado no banco de dados.</td>
+                      <td colSpan={4} className="px-6 py-10 text-center text-slate-500">Nenhum candidato encontrado.</td>
                     </tr>
                   )}
                 </tbody>
