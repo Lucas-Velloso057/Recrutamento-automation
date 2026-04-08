@@ -1,4 +1,4 @@
-const N8N_WEBHOOK_URL = "http://localhost:5678/webhook/candidaturas-rh";
+const N8N_WEBHOOK_URL = `http://${process.env.N8N_HOST || 'localhost'}:5678/webhook/candidaturas-rh`;
 
 const server = Bun.serve({
     port: 3000,
@@ -23,6 +23,7 @@ const server = Bun.serve({
                 }
                 
                 try {
+                    console.log(N8N_WEBHOOK_URL)
                     const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
                         method: "POST",
                         body: formdata,
@@ -89,4 +90,4 @@ const server = Bun.serve({
     },
 });
 
-console.log(`Servidor executando em: http://localhost:${server.port}`);
+console.log(`Servidor executando em: http://${process.env.N8N_HOST || 'localhost'}:${server.port}`);
