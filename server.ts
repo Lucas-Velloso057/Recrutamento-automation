@@ -52,28 +52,13 @@ const server = Bun.serve({
 
         // SERVIR O CÓDIGO REACT (Frontend)
         if (url.pathname === "/index.js") {
-            // Tenta primeiro o arquivo da build estática
             const distFile = Bun.file("./dist/index.js");
             if (await distFile.exists()) {
                 return new Response(distFile, {
                     headers: { "Content-Type": "application/javascript; charset=utf-8" },
                 });
             }
-
-            // Fallback para build on-the-fly (útil em dev)
-            const build = await Bun.build({
-                entrypoints: ["./src/index.tsx"],
-                minify: true,
-            });
-
-            if (!build.success) {
-                console.error("Erro no Build do React:", build.logs);
-                return new Response("Erro ao compilar o React", { status: 500 });
-            }
-
-            return new Response(build.outputs[0], {
-                headers: { "Content-Type": "application/javascript; charset=utf-8" },
-            });
+            return new Response("Erro: Arquivo ./dist/index.js não encontrado.", { status: 404 });
         }
 
         // SERVIR O HTML BASE
