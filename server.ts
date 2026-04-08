@@ -1,23 +1,21 @@
 const PORT = process.env.PORT || 3000;
-const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL?? "http://localhost:5678/webhook/candidaturas-rh";
+const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL ?? "http://localhost:5678/webhook/candidaturas-rh";
 
 const server = Bun.serve({
     port: PORT,
     async fetch(req: any) {
         const url = new URL(req.url);
+        const path = url.pathname;
 
-        //Recebe do React e envia para o n8n
-        if (req.method === "POST" && url.pathname === "/api/candidaturas") {
+        // 1. Recebe do React e envia para o n8n
+        if (req.method === "POST" && path === "/api/candidaturas") {
             try {
-                // Extrair dados do FormData vindo do Browser
                 const formdata = await req.formData();
-
                 const fullName = formdata.get("fullName");
                 const email = formdata.get("email");
                 const position = formdata.get("position");
                 const resume = formdata.get("resume") as File | null;
 
-                // Validação básica de segurança (Double Check)
                 if (!fullName || !email || !resume) {
                     console.error("❌ Tentativa de envio com dados incompletos.");
                     return new Response("Dados incompletos.", { status: 400 });
@@ -43,51 +41,22 @@ const server = Bun.serve({
                     console.error("❌ FALHA DE CONEXÃO: O n8n está rodando no Docker?");
                     return new Response("Serviço de automação offline.", { status: 503 });
                 }
-
             } catch (error) {
                 console.error("❌ Erro crítico no servidor:", error);
                 return new Response("Erro interno do servidor.", { status: 500 });
             }
         }
 
-        // SERVIR O CÓDIGO REACT (Frontend)
-        if (url.pathname === "/index.js") {
-            const build = await Bun.build({
-                entrypoints: ["./src/index.tsx"],
-            });
+        // 2. Servir arquivos estáticos e compilar TSX on-the-fly (Super Poder do Bun)
+        let filePath = path === "/" ? "./index.html" : `.${path}`;
+        const file = Bun.file(filePath);
 
-            if (!build.success) {
-                console.error("Erro no Build do React:", build.logs);
-                return new Response("Erro ao compilar o React", { status: 500 });
-            }
-
-            return new Response(build.outputs[0], {
-                headers: { "Content-Type": "application/javascript" },
-            });
+        if (await file.exists()) {
+            return new Response(file);
         }
 
-        // SERVIR O HTML BASE
-        return new Response(`
-      <!DOCTYPE html>
-      <html lang="pt">
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Portal de Recrutamento - RH</title>
-          <script src="https://cdn.tailwindcss.com"></script>
-          <style>
-            body { font-family: system-ui, sans-serif; background-color: #f3f4f6; color: #333; }
-          </style>
-        </head>
-        <body>
-          <div id="root" class="min-h-screen"></div>
-          <script type="module" src="/index.js"></script>
-        </body>
-      </html>
-    `, {
-            headers: { "Content-Type": "text/html" }
-        });
+        return new Response("Página não encontrada", { status: 404 });
     },
 });
 
-console.log(`Servidor executando em: http://${process.env.N8N_HOST || 'localhost'}:${server.port}`);
+console.log(`🚀 Servidor executando em: http://localhost:${server.port}`);
