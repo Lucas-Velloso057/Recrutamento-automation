@@ -86,10 +86,10 @@ export const CandidateForm = () => {
               className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none transition-colors bg-white ${errors.position ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200 focus:border-blue-500'}`}
             >
               <option value="">Selecione uma vaga...</option>
-              <option value="Frontend">Frontend Developer</option>
-              <option value="Backend">Backend Developer</option>
-              <option value="Fullstack">Fullstack Developer</option>
-              <option value="Design">Product Designer</option>
+              <option value="Frontend Developer">Frontend Developer</option>
+              <option value="Backend Developer">Backend Developer</option>
+              <option value="Fullstack Developer">Fullstack Developer</option>
+              <option value="Product Designer">Product Designer</option>
             </select>
             {errors.position && <span className="text-red-500 text-xs mt-1 block">{errors.position.message}</span>}
           </div>
@@ -121,7 +121,7 @@ export const CandidateForm = () => {
                 <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                A processar...
+                Processando...
               </span>
             ) : 'Enviar Candidatura'}
           </button>
