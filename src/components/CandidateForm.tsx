@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { candidateSchema, CandidateFormData } from '../schemas/candidateSchema';
+import { ExperienceLevels } from '../enum/experienceLevels';
 
 export const CandidateForm = () => {
   const {
@@ -18,7 +19,7 @@ export const CandidateForm = () => {
       formData.append('fullName', data.fullName);
       formData.append('email', data.email);
       formData.append('position', data.position);
-
+      formData.append('experienceLevels', data.experienceLevels);
       // O react-hook-form coloca os ficheiros num array
       if (data.resume && data.resume.length > 0) {
         formData.append('resume', data.resume[0]);
@@ -41,6 +42,9 @@ export const CandidateForm = () => {
       alert('Erro interno de comunicação.');
     }
   };
+
+  // Converte o Enum para um Array para podermos usar o .map()
+  const experienceOptions = Object.values(ExperienceLevels);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -91,6 +95,28 @@ export const CandidateForm = () => {
               <option value="Product Designer">Product Designer</option>
             </select>
             {errors.position && <span className="text-red-500 text-xs mt-1 block">{errors.position.message}</span>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nível de Inglês</label>
+            <select
+              {...register('experienceLevels')} // Deve bater com o nome no Schema
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none transition-colors bg-white ${
+                errors.experienceLevels ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200 focus:border-blue-500'
+              }`}
+            >
+              <option value="">Selecione seu nível...</option>
+              {experienceOptions.map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
+              ))}
+            </select>
+            {errors.experienceLevels && (
+              <span className="text-red-500 text-xs mt-1 block font-medium">
+                {errors.experienceLevels.message}
+              </span>
+            )}
           </div>
 
           {/* Currículo */}

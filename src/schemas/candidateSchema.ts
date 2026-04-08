@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { Cargos } from '../enum/cargos';
+import { ExperienceLevels } from '../enum/experienceLevels';
 
 // Constante para o tamanho máximo do ficheiro (ex: 5MB)
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -11,6 +12,9 @@ export const candidateSchema = z.object({
   linkedIn: z.string().url('O link do LinkedIn deve ser um URL válido.').optional(),
   position: z.enum(Cargos, {
     message: 'Selecione uma vaga válida.',
+  }),
+  experienceLevels: z.enum(ExperienceLevels, {
+    message: 'Selecione um nível de experiência válido.',
   }),
   // Simulação de validação de ficheiro no frontend
   resume: z.any()
