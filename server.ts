@@ -1,21 +1,23 @@
 const PORT = process.env.PORT || 3000;
-const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL ?? "http://localhost:5678/webhook/candidaturas-rh";
+const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL?? "http://localhost:5678/webhook/candidaturas-rh";
 
 const server = Bun.serve({
     port: PORT,
     async fetch(req: any) {
         const url = new URL(req.url);
-        const path = url.pathname;
 
-        // 1. Recebe do React e envia para o n8n
-        if (req.method === "POST" && path === "/api/candidaturas") {
+        //Recebe do React e envia para o n8n
+        if (req.method === "POST" && url.pathname === "/api/candidaturas") {
             try {
+                // Extrair dados do FormData vindo do Browser
                 const formdata = await req.formData();
+
                 const fullName = formdata.get("fullName");
                 const email = formdata.get("email");
                 const position = formdata.get("position");
                 const resume = formdata.get("resume") as File | null;
 
+                // Validação básica de segurança (Double Check)
                 if (!fullName || !email || !resume) {
                     console.error("❌ Tentativa de envio com dados incompletos.");
                     return new Response("Dados incompletos.", { status: 400 });
@@ -41,37 +43,52 @@ const server = Bun.serve({
                     console.error("❌ FALHA DE CONEXÃO: O n8n está rodando no Docker?");
                     return new Response("Serviço de automação offline.", { status: 503 });
                 }
+
             } catch (error) {
                 console.error("❌ Erro crítico no servidor:", error);
                 return new Response("Erro interno do servidor.", { status: 500 });
             }
         }
 
-        // 2. Servir arquivos estáticos e compilar TSX on-the-fly (Super Poder do Bun)
-        let filePath = path === "/" ? "./index.html" : `.${path}`;
-        const file = Bun.file(filePath);
-
-        if (await file.exists()) {
-            return new Response(file);
-        }
-
-        // Rota especial para o arquivo principal index.js
-        if (path === "/src/index.tsx") {
+        // SERVIR O CÓDIGO REACT (Frontend)
+        if (url.pathname === "/index.js") {
             const build = await Bun.build({
                 entrypoints: ["./src/index.tsx"],
+                minify: true, // Otimiza para produção
             });
-            
+
             if (!build.success) {
-                return new Response("Erro no Build", { status: 500 });
+                console.error("Erro no Build do React:", build.logs);
+                return new Response("Erro ao compilar o React", { status: 500 });
             }
 
             return new Response(build.outputs[0], {
-                headers: { "Content-Type": "application/javascript" },
+                headers: { 
+                    "Content-Type": "application/javascript; charset=utf-8",
+                    "Access-Control-Allow-Origin": "*" // Evita bloqueios de CORS na VPS
+                },
             });
         }
 
-        return new Response("Página não encontrada", { status: 404 });
+        // SERVIR O HTML BASE
+        return new Response(`
+      <!DOCTYPE html>
+      <html lang="pt">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Portal de Recrutamento - RH</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body class="bg-slate-50">
+          <div id="root"></div>
+          <script type="module" src="/index.js"></script>
+        </body>
+      </html>
+    `, {
+            headers: { "Content-Type": "text/html; charset=utf-8" }
+        });
     },
 });
 
-console.log(`🚀 Servidor executando em: http://localhost:${server.port}`);
+console.log(`Servidor executando em: http://${process.env.N8N_HOST || 'localhost'}:${server.port}`);
