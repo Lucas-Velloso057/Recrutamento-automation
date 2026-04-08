@@ -1,5 +1,13 @@
+import { Client } from 'pg';
+
 const PORT = process.env.PORT || 3000;
-const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL?? "http://localhost:5678/webhook/candidaturas-rh";
+const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL ?? "http://localhost:5678/webhook/candidaturas-rh";
+
+// Inicializa conexão com o PostgreSQL
+const dbClient = new Client({
+    connectionString: process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:5432/candidates"
+});
+dbClient.connect().catch((err: any) => console.error("⚠️ Aviso: Banco de dados não conectado. Verifique DATABASE_URL.", err));
 
 const server = Bun.serve({
     port: PORT,
@@ -50,7 +58,33 @@ const server = Bun.serve({
             }
         }
 
-        // SERVIR O CÓDIGO REACT (Frontend)
+        // ==========================================
+        // ROTAS DO DASHBOARD ADMIN (DB POSTGRES)
+        // ==========================================
+        if (req.method === "GET" && url.pathname === "/api/admin/candidates") {
+            try {
+                const res = await dbClient.query("SELECT * FROM candidates ORDER BY applied_at DESC");
+                return new Response(JSON.stringify(res.rows), { headers: { "Content-Type": "application/json" } });
+            } catch (error) {
+                console.error("Erro ao buscar candidatos:", error);
+                return new Response(JSON.stringify([]), { status: 500, headers: { "Content-Type": "application/json" } });
+            }
+        }
+
+        if (req.method === "POST" && url.pathname === "/api/admin/update-status") {
+            try {
+                const body = await req.json();
+                await dbClient.query("UPDATE candidates SET status = $1 WHERE id = $2", [body.status, body.id]);
+                return new Response(JSON.stringify({ success: true }), { headers: { "Content-Type": "application/json" } });
+            } catch (error) {
+                console.error("Erro ao atualizar status:", error);
+                return new Response("Erro ao atualizar status", { status: 500 });
+            }
+        }
+
+        // ==========================================
+        // SERVIR O FRONTEND (React SPA)
+        // ==========================================
         if (url.pathname === "/index.js") {
             const distFile = Bun.file("./dist/index.js");
             if (await distFile.exists()) {
@@ -61,7 +95,14 @@ const server = Bun.serve({
             return new Response("Erro: Arquivo ./dist/index.js não encontrado.", { status: 404 });
         }
 
-        // SERVIR O HTML BASE
+        // Fallback SPA: Qualquer outra rota (como / ou /admin) devolve o index.html gerido pelo React Router
+        let filePath = `.${url.pathname}`;
+        const file = Bun.file(filePath);
+        if (url.pathname !== "/" && await file.exists()) {
+            return new Response(file);
+        }
+
+        // SERVIR O HTML BASE PARA ROTAS DESCONHECIDAS
         return new Response(`
       <!DOCTYPE html>
       <html lang="pt">
