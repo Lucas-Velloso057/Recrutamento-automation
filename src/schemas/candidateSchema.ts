@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Cargos } from '../enum/cargos';
 
 // Constante para o tamanho máximo do ficheiro (ex: 5MB)
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -8,7 +9,7 @@ export const candidateSchema = z.object({
   fullName: z.string().min(3, 'O nome completo é obrigatório e deve ter no mínimo 3 caracteres.'),
   email: z.string().email('Forneça um e-mail válido para contacto.'),
   linkedIn: z.string().url('O link do LinkedIn deve ser um URL válido.').optional(),
-  position: z.enum(['Frontend', 'Backend', 'Fullstack', 'Design'], {
+  position: z.enum(Cargos, {
     message: 'Selecione uma vaga válida.',
   }),
   // Simulação de validação de ficheiro no frontend
