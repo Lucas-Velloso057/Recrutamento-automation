@@ -13,7 +13,7 @@ export const candidateSchema = z.object({
   position: z.enum(Cargos, {
     message: 'Selecione uma vaga válida.',
   }),
-  experienceLevels: z.enum(ExperienceLevels, {
+  englishLevel: z.enum(ExperienceLevels, {
     message: 'Selecione um nível de experiência válido.',
   }),
   // Simulação de validação de ficheiro no frontend
