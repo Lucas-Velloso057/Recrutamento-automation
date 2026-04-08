@@ -17,7 +17,7 @@ export const candidateSchema = z.object({
     .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, 'O tamanho máximo permitido é de 5MB.')
     .refine(
       (files) => ACCEPTED_FILE_TYPES.includes(files?.[0]?.type),
-      'Apenas são aceites ficheiros em formato PDF ou Word.'
+      'Apenas são aceites arquivos em formato PDF ou Word.'
     ),
 });
 

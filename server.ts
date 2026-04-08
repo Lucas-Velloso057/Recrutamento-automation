@@ -5,10 +5,10 @@ const server = Bun.serve({
     async fetch(req: any) {
         const url = new URL(req.url);
 
-        // 1. ENDPOINT DA API: Recebe do React e envia para o n8n
+        //Recebe do React e envia para o n8n
         if (req.method === "POST" && url.pathname === "/api/candidaturas") {
             try {
-                // 1.1 Extrair dados do FormData vindo do Browser
+                // Extrair dados do FormData vindo do Browser
                 const formdata = await req.formData();
 
                 const fullName = formdata.get("fullName");
@@ -21,16 +21,11 @@ const server = Bun.serve({
                     console.error("❌ Tentativa de envio com dados incompletos.");
                     return new Response("Dados incompletos.", { status: 400 });
                 }
-
-                console.log(`📥 Candidatura recebida no Bun: ${fullName} (${position})`);
-
-                // 1.2 ENVIAR PARA O n8n (ORQUESTRADOR)
-                console.log(`🚀 A encaminhar para o n8n em: ${N8N_WEBHOOK_URL}...`);
                 
                 try {
                     const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
                         method: "POST",
-                        body: formdata, // Repassamos o FormData integralmente (incluindo o ficheiro)
+                        body: formdata,
                     });
 
                     if (n8nResponse.ok) {
@@ -54,7 +49,7 @@ const server = Bun.serve({
             }
         }
 
-        // 2. SERVIR O CÓDIGO REACT (Frontend)
+        // SERVIR O CÓDIGO REACT (Frontend)
         if (url.pathname === "/index.js") {
             const build = await Bun.build({
                 entrypoints: ["./src/index.tsx"],
@@ -70,7 +65,7 @@ const server = Bun.serve({
             });
         }
 
-        // 3. SERVIR O HTML BASE
+        // SERVIR O HTML BASE
         return new Response(`
       <!DOCTYPE html>
       <html lang="pt">
@@ -94,4 +89,4 @@ const server = Bun.serve({
     },
 });
 
-console.log(`🚀 Servidor e Portal a correr em: http://localhost:${server.port}`);
+console.log(`Servidor executando em: http://localhost:${server.port}`);
