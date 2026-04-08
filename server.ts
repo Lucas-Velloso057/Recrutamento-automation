@@ -55,6 +55,21 @@ const server = Bun.serve({
             return new Response(file);
         }
 
+        // Rota especial para o arquivo principal index.js
+        if (path === "/src/index.tsx") {
+            const build = await Bun.build({
+                entrypoints: ["./src/index.tsx"],
+            });
+            
+            if (!build.success) {
+                return new Response("Erro no Build", { status: 500 });
+            }
+
+            return new Response(build.outputs[0], {
+                headers: { "Content-Type": "application/javascript" },
+            });
+        }
+
         return new Response("Página não encontrada", { status: 404 });
     },
 });
