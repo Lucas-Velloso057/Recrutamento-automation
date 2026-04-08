@@ -52,9 +52,18 @@ const server = Bun.serve({
 
         // SERVIR O CÓDIGO REACT (Frontend)
         if (url.pathname === "/index.js") {
+            // Tenta primeiro o arquivo da build estática
+            const distFile = Bun.file("./dist/index.js");
+            if (await distFile.exists()) {
+                return new Response(distFile, {
+                    headers: { "Content-Type": "application/javascript; charset=utf-8" },
+                });
+            }
+
+            // Fallback para build on-the-fly (útil em dev)
             const build = await Bun.build({
                 entrypoints: ["./src/index.tsx"],
-                minify: true, // Otimiza para produção
+                minify: true,
             });
 
             if (!build.success) {
@@ -63,10 +72,7 @@ const server = Bun.serve({
             }
 
             return new Response(build.outputs[0], {
-                headers: { 
-                    "Content-Type": "application/javascript; charset=utf-8",
-                    "Access-Control-Allow-Origin": "*" // Evita bloqueios de CORS na VPS
-                },
+                headers: { "Content-Type": "application/javascript; charset=utf-8" },
             });
         }
 
