@@ -11,7 +11,8 @@ services:
       - N8N_PORT=5678
       - N8N_PROTOCOL=http
       - NODE_ENV=production
-      - WEBHOOK_URL=http://localhost:5678/
+      - N8N_SECURE_COOKIE=false
+      - WEBHOOK_URL=http://${N8N_HOST}:5678/
       # Ajuste de timezone
       - GENERIC_TIMEZONE=America/Sao_Paulo
     volumes:
