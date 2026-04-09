@@ -1,47 +1,14 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { candidateSchema, CandidateFormData } from '../schemas/candidateSchema';
 import { ExperienceLevels } from '../enum/experienceLevels';
+import { useCandidateForm } from '../hooks/useCandidateForm';
 
 export const CandidateForm = () => {
-  const [isSubmitted, setIsSubmitted] = useState(false);
-
   const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<CandidateFormData>({
-    resolver: zodResolver(candidateSchema),
-  });
-
-  const onSubmit = async (data: CandidateFormData) => {
-    try {
-      const formData = new FormData();
-      formData.append('fullName', data.fullName);
-      formData.append('email', data.email);
-      formData.append('position', data.position);
-      formData.append('englishLevel', data.englishLevel);
-      if (data.resume && data.resume.length > 0) {
-        formData.append('resume', data.resume[0]);
-      }
-
-      // Enviamos para a nossa própria API no Bun
-      const response = await fetch('/api/candidaturas', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        setIsSubmitted(true);
-      } else {
-        alert('Erro ao enviar candidatura. Tente novamente.');
-      }
-    } catch (error) {
-      console.error('Erro na submissão:', error);
-      alert('Erro interno de comunicação.');
-    }
-  };
+    form: { register },
+    onSubmit,
+    isSubmitted,
+    isSubmitting,
+    errors
+  } = useCandidateForm();
 
   // Converte o Enum para um Array para podermos usar o .map()
   const experienceOptions = Object.values(ExperienceLevels);
@@ -73,7 +40,7 @@ export const CandidateForm = () => {
           <p className="text-sm text-gray-500 mt-2">Preencha os dados abaixo para a sua candidatura.</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <form onSubmit={onSubmit} className="space-y-5">
 
           {/* Nome */}
           <div>

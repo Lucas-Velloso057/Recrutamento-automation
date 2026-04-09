@@ -1,87 +1,17 @@
-import { useEffect, useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-
-type Candidate = {
-  id: number;
-  name: string;
-  email: string;
-  position: string;
-  experience_level: string;
-  resume_url: string;
-  status: string;
-  applied_at: string;
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  'Pendente': '#f59e0b',
-  'Em Análise': '#3b82f6',
-  'Aprovado': '#10b981',
-  'Rejeitado': '#ef4444'
-};
-
-const STATUS_OPTIONS = ['Pendente', 'Em Análise', 'Aprovado', 'Rejeitado'];
+import { useAdminDashboard } from '../hooks/useAdminDashboard';
+import { STATUS_COLORS, STATUS_OPTIONS } from '../types/candidate';
 
 export const AdminDashboard = () => {
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [englishFilter, setEnglishFilter] = useState('Todos');
-
-  useEffect(() => {
-    fetch('/api/admin/candidates')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) setCandidates(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Erro ao buscar candidatos:", err);
-        setLoading(false);
-      });
-  }, []);
-
-  const updateStatus = async (id: number, newStatus: string) => {
-    try {
-      const res = await fetch('/api/admin/update-status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status: newStatus })
-      });
-      if (res.ok) {
-        setCandidates(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c));
-      } else {
-        alert('Erro ao atualizar status do candidato!');
-      }
-    } catch (error) {
-      alert('Erro de rede ao atualizar.');
-    }
-  };
-
-  const chartData = useMemo(() => {
-    const counts = candidates.reduce((acc, curr) => {
-      // Limpa os espaços em branco para garantir que faça match com a key no dict 
-      // (ex. se o DB tiver "Pendente " ou " Pendente")
-      const cleanStatus = curr.status?.trim() || 'Pendente'; 
-      acc[cleanStatus] = (acc[cleanStatus] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    return Object.keys(counts).map(status => ({
-      name: status,
-      value: counts[status] || 0
-    })).filter(item => item.value > 0);
-  }, [candidates]);
-
-  // Filtra os candidatos de forma reativa localmente com base na seleção
-  const filteredCandidates = useMemo(() => {
-    if (englishFilter === 'Todos') return candidates;
-    return candidates.filter(c => c.experience_level === englishFilter);
-  }, [candidates, englishFilter]);
-
-  // Níveis de inglês únicos na tabela dinamicamente
-  const availableEnglishLevels = useMemo(() => {
-    const levels = candidates.map(c => c.experience_level).filter(Boolean);
-    return Array.from(new Set(levels)).sort();
-  }, [candidates]);
+  const {
+    candidates,
+    loading,
+    englishFilter,
+    setEnglishFilter,
+    updateStatus,
+    chartData,
+    availableEnglishLevels
+  } = useAdminDashboard();
 
   if (loading) return <div className="min-h-screen flex items-center justify-center p-8 text-slate-500">Carregando Dashboard...</div>;
 
@@ -149,7 +79,7 @@ export const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredCandidates.map(c => (
+                  {candidates.map(c => (
                     <tr key={c.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4">
                         <p className="font-semibold text-slate-900">{c.name}</p>
@@ -174,7 +104,7 @@ export const AdminDashboard = () => {
                       </td>
                     </tr>
                   ))}
-                  {filteredCandidates.length === 0 && (
+                  {candidates.length === 0 && (
                     <tr>
                       <td colSpan={4} className="px-6 py-10 text-center text-slate-500">Nenhum candidato encontrado.</td>
                     </tr>
